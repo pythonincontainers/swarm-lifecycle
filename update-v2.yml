@@ -1,0 +1,81 @@
+version: "3.7"
+
+networks:
+  update_net:
+    driver: overlay
+    name: update_net
+    attachable: true
+
+services:
+  replicated:
+# New Image Version 2
+    image: pythonincontainers/swarm-env:v2
+    networks:
+      - update_net
+    deploy:
+      mode: replicated
+      replicas: 3
+      endpoint_mode: vip
+# Update Config for "replicated" Service
+      update_config:
+        parallelism: 1
+        delay: 5s
+        order: start-first
+        failure_action: rollback
+        monitor: 3s
+# Rollback Config for "replicated" Service
+      rollback_config:
+        parallelism: 1
+        delay: 5s
+        order: start-first
+        failure_action: pause
+        monitor: 3s
+    environment:
+      SERVICE_NAME: "{{.Service.Name}}"
+      SERVICE_ID: "{{.Service.ID}}"
+      SERVICE_LABELS: "{{.Service.Labels}}"
+      NODE_ID: "{{.Node.ID}}"
+      NODE_HOSTNAME: "{{.Node.Hostname}}"
+      TASK_ID: "{{.Task.ID}}"
+      TASK_NAME: "{{.Task.Name}}"
+      TASK_SLOT: "{{.Task.Slot}}"
+    ports:
+      - target: 5000
+        published: 5001
+        mode: ingress
+
+  global:
+  # New Image Version 2
+    image: pythonincontainers/swarm-env:v2
+    networks:
+      - update_net
+    deploy:
+      mode: global
+      endpoint_mode: dnsrr
+# Update Config for "global" Service
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: stop-first
+        failure_action: rollback
+        monitor: 3s
+# Rollback Config for "global" Service
+      rollback_config:
+        parallelism: 1
+        delay: 10s
+        order: stop-first
+        failure_action: pause
+        monitor: 3s
+    environment:
+      SERVICE_NAME: "{{.Service.Name}}"
+      SERVICE_ID: "{{.Service.ID}}"
+      SERVICE_LABELS: "{{.Service.Labels}}"
+      NODE_ID: "{{.Node.ID}}"
+      NODE_HOSTNAME: "{{.Node.Hostname}}"
+      TASK_ID: "{{.Task.ID}}"
+      TASK_NAME: "{{.Task.Name}}"
+      TASK_SLOT: "{{.Task.Slot}}"
+    ports:
+      - target: 5000
+        published: 5004
+        mode: host

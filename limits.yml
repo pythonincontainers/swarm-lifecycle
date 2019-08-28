@@ -1,0 +1,29 @@
+version: "3.7"
+
+services:
+  replicated:
+    image: pythonincontainers/swarm-env:v1
+    deploy:
+      mode: replicated
+      replicas: 3
+      endpoint_mode: vip
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 500M
+        reservations:
+          cpus: '0.1'
+          memory: 300M
+    environment:
+      SERVICE_NAME: "{{.Service.Name}}"
+      SERVICE_ID: "{{.Service.ID}}"
+      SERVICE_LABELS: "{{.Service.Labels}}"
+      NODE_ID: "{{.Node.ID}}"
+      NODE_HOSTNAME: "{{.Node.Hostname}}"
+      TASK_ID: "{{.Task.ID}}"
+      TASK_NAME: "{{.Task.Name}}"
+      TASK_SLOT: "{{.Task.Slot}}"
+    ports:
+      - target: 5000
+        published: 5001
+        mode: ingress

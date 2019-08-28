@@ -1,0 +1,76 @@
+version: "3.7"
+
+networks:
+  update_net:
+    driver: overlay
+    name: update_net
+    attachable: true
+
+services:
+  replicated:
+    image: pythonincontainers/swarm-env:v2
+    networks:
+      - update_net
+    deploy:
+      mode: replicated
+# Updated number of Replicas to 6
+      replicas: 6
+      endpoint_mode: vip
+      update_config:
+        parallelism: 1
+        delay: 5s
+        order: start-first
+        failure_action: rollback
+        monitor: 3s
+      rollback_config:
+        parallelism: 1
+        delay: 5s
+        order: start-first
+        failure_action: pause
+        monitor: 3s
+    environment:
+      SERVICE_NAME: "{{.Service.Name}}"
+      SERVICE_ID: "{{.Service.ID}}"
+      SERVICE_LABELS: "{{.Service.Labels}}"
+      NODE_ID: "{{.Node.ID}}"
+      NODE_HOSTNAME: "{{.Node.Hostname}}"
+      TASK_ID: "{{.Task.ID}}"
+      TASK_NAME: "{{.Task.Name}}"
+      TASK_SLOT: "{{.Task.Slot}}"
+    ports:
+      - target: 5000
+        published: 5001
+        mode: ingress
+
+  global:
+    image: pythonincontainers/swarm-env:v2
+    networks:
+      - update_net
+    deploy:
+      mode: global
+      endpoint_mode: dnsrr
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: stop-first
+        failure_action: rollback
+        monitor: 3s
+      rollback_config:
+        parallelism: 1
+        delay: 10s
+        order: stop-first
+        failure_action: pause
+        monitor: 3s
+    environment:
+      SERVICE_NAME: "{{.Service.Name}}"
+      SERVICE_ID: "{{.Service.ID}}"
+      SERVICE_LABELS: "{{.Service.Labels}}"
+      NODE_ID: "{{.Node.ID}}"
+      NODE_HOSTNAME: "{{.Node.Hostname}}"
+      TASK_ID: "{{.Task.ID}}"
+      TASK_NAME: "{{.Task.Name}}"
+      TASK_SLOT: "{{.Task.Slot}}"
+    ports:
+      - target: 5000
+        published: 5004
+        mode: host

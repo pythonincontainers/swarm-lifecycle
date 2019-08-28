@@ -1,0 +1,51 @@
+version: "3.7"
+
+networks:
+  update_net:
+    driver: overlay
+    name: update_net
+    attachable: true
+
+services:
+  replicated:
+    image: pythonincontainers/swarm-env:v1
+    networks:
+      - update_net
+    deploy:
+      mode: replicated
+      replicas: 3
+      endpoint_mode: vip
+    environment:
+      SERVICE_NAME: "{{.Service.Name}}"
+      SERVICE_ID: "{{.Service.ID}}"
+      SERVICE_LABELS: "{{.Service.Labels}}"
+      NODE_ID: "{{.Node.ID}}"
+      NODE_HOSTNAME: "{{.Node.Hostname}}"
+      TASK_ID: "{{.Task.ID}}"
+      TASK_NAME: "{{.Task.Name}}"
+      TASK_SLOT: "{{.Task.Slot}}"
+    ports:
+      - target: 5000
+        published: 5001
+        mode: ingress
+
+  global:
+    image: pythonincontainers/swarm-env:v1
+    networks:
+      - update_net
+    deploy:
+      mode: global
+      endpoint_mode: dnsrr
+    environment:
+      SERVICE_NAME: "{{.Service.Name}}"
+      SERVICE_ID: "{{.Service.ID}}"
+      SERVICE_LABELS: "{{.Service.Labels}}"
+      NODE_ID: "{{.Node.ID}}"
+      NODE_HOSTNAME: "{{.Node.Hostname}}"
+      TASK_ID: "{{.Task.ID}}"
+      TASK_NAME: "{{.Task.Name}}"
+      TASK_SLOT: "{{.Task.Slot}}"
+    ports:
+      - target: 5000
+        published: 5004
+        mode: host
